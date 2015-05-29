@@ -1,0 +1,72 @@
+#!/usr/bin/env php
+<?php
+
+if ((! @include __DIR__.'/../../../autoload.php') && (! @include __DIR__.'/../vendor/autoload.php')) {
+    die('You must set up the project dependencies, run the following commands:' . PHP_EOL .
+         'curl -s http://getcomposer.org/installer | php' . PHP_EOL .
+         'php composer.phar install' . PHP_EOL
+    );
+}
+
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use Michelf\MarkdownExtra as MarkdownExtraParser;
+
+$console = new Application;
+$console
+    ->register('g')
+    ->addArgument(
+        'src',
+        InputArgument::REQUIRED,
+        'Location of file (absolute file path)'
+    )
+    ->addArgument(
+        'des',
+        InputArgument::REQUIRED,
+        'Output directory for the file (absolute directory path)'
+    )
+    ->setDescription('Generate HTML & PDF version for Markdown file')
+    ->setCode(function(InputInterface $input, OutputInterface $output) use($console)
+    {
+        // Check if the source file exists
+        if( ! file_exists($input->getArgument('src')) )
+        {
+            $output->writeln("<comment>The source file don't exists...</comment>");
+            return;
+        }
+
+        // Check if the output directory exists
+        if( ! is_dir($input->getArgument('des')) )
+        {
+            $output->writeln("<comment>The output directory don't exists...</comment>");
+            return;
+        }
+
+        // Generated Filename
+        $fileName = explode("/", $input->getArgument('src'));
+        $fileName = explode(".", $fileName[count($fileName) - 1])[0];
+        $fileName = date("Ymd-Hi")."_".$fileName;
+
+        // MarkdownParser
+        $markdown_parser = new MarkdownExtraParser;
+        $html            = $markdown_parser->transform(file_get_contents($input->getArgument('src')));
+
+        $generated = str_replace('{{ html }}', $html, file_get_contents(__DIR__.'/../layout/layout.html'));
+
+
+        // Save html to directory
+        file_put_contents($input->getArgument('des').'/'.$fileName.'.html', $generated);
+        $output->writeln("<info>HTML saved to: {$input->getArgument('des')}/{$fileName}.html</info>");
+
+        // PDF
+        $pdf = new TCPDF();
+        $pdf->AddPage('P', 'A4');
+
+        $pdf->writeHTML($generated, true, false, true, false, '');
+        $pdf->Output($input->getArgument('des').'/'.$fileName.'.pdf', 'F');
+        $output->writeln("<info>PDF saved to: {$input->getArgument('des')}/{$fileName}.pdf</info>");
+    });
+$console->run();
