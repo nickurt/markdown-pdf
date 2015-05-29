@@ -46,16 +46,15 @@ $console
         }
 
         // Generated Filename
-        $fileName = explode("/", $input->getArgument('src'));
-        $fileName = explode(".", $fileName[count($fileName) - 1])[0];
-        $fileName = date("Ymd-Hi")."_".$fileName;
+        $fileName   = explode("/", $input->getArgument('src'));
+        $fileName   = explode(".", $fileName[count($fileName) - 1])[0];
+        $fileName   = date("Ymd-Hi")."_".$fileName;
 
         // MarkdownParser
-        $markdown_parser = new MarkdownExtraParser;
-        $html            = $markdown_parser->transform(file_get_contents($input->getArgument('src')));
+        $parser     = new MarkdownExtraParser;
+        $html       = $markdown_parser->transform(file_get_contents($input->getArgument('src')));
 
-        $generated = str_replace('{{ html }}', $html, file_get_contents(__DIR__.'/../layout/layout.html'));
-
+        $generated  = str_replace('{{ html }}', $html, file_get_contents(__DIR__.'/../layout/layout.html'));
 
         // Save html to directory
         file_put_contents($input->getArgument('des').'/'.$fileName.'.html', $generated);
