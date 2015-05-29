@@ -52,7 +52,7 @@ $console
 
         // MarkdownParser
         $parser     = new MarkdownExtraParser;
-        $html       = $markdown_parser->transform(file_get_contents($input->getArgument('src')));
+        $html       = $parser->transform(file_get_contents($input->getArgument('src')));
 
         $generated  = str_replace('{{ html }}', $html, file_get_contents(__DIR__.'/../layout/layout.html'));
 
